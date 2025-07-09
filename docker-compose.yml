@@ -15,6 +15,12 @@ services:
       - banco
   app:
     image: python:3.6
+    environment:
+      - DB_NAME=email_sender
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
     volumes:
       # Aplicação
       - ./app:/app
