@@ -1,5 +1,5 @@
-FROM python:3.6
+FROM python:3.9
 LABEL maintainer 'Juracy Filho <juracy at gmail.com>'
 ENV PYTHONUNBUFFERED 1
-RUN pip install redis==2.10.5
+RUN pip install redis==4.3.4
 ENTRYPOINT ["/usr/local/bin/python"]

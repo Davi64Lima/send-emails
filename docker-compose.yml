@@ -14,7 +14,7 @@ services:
     networks: 
       - banco
   app:
-    image: python:3.6
+    image: python:3.9
     environment:
       - DB_NAME=email_sender
       - DB_USER=postgres
@@ -61,8 +61,6 @@ services:
       - web
     depends_on:
       - app
-
-
 
 volumes:
   dados:
