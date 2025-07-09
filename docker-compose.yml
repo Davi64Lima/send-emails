@@ -28,16 +28,16 @@ services:
       - db
       - queue
   worker:
-    image: python:3.6
+    build: worker
     volumes:
       - ./worker:/worker
     working_dir: /worker
-    command: ./app.sh
+    command: ./worker.py
     networks: 
       - fila
     depends_on:
-      - app
       - queue
+      - app
   queue:
     image: redis:3.2
     networks:
