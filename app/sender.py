@@ -8,6 +8,12 @@ from datetime import datetime
 class Sender(Bottle):
     def __init__(self):
         super().__init__()
+        print(os.getenv('DB_NAME'))
+        print(os.getenv('DB_USER'))
+        print(os.getenv('DB_PASS'))
+        print(os.getenv('DB_HOST'))
+        print(os.getenv('REDIS_HOST'))
+
         self.dsn = f"dbname={os.getenv('DB_NAME', 'email_sender')} " \
                    f"user={os.getenv('DB_USER', 'postgres')} " \
                    f"password={os.getenv('DB_PASS', 'postgres')} " \
@@ -36,36 +42,57 @@ class Sender(Bottle):
         now = datetime.utcnow()
 
         try:
-            with psycopg2.connect(self.dsn) as conn:
+            print(f"[DB] Attempting to connect with DSN: {self.dsn}")
+            with psycopg2.connect(self.dsn, connect_timeout=5) as conn:
+                print("[DB] Connection successful!")
                 with conn.cursor() as cur:
                     cur.execute(SQL, (now, assunto, mensagem, email))
                     conn.commit()
+                    print("[DB] Insert successful!")
         except Exception as e:
             print(f"[DB ERROR] {e}")
             raise
 
-        msg = {'data': now.isoformat(), 'assunto': assunto, 'mensagem': mensagem, 'email': email}
-        self.fila.rpush('sender', json.dumps(msg))
+        try:
+            print(f"[REDIS] Attempting to connect to Redis...")
+            msg = {'data': now.isoformat(), 'assunto': assunto, 'mensagem': mensagem, 'email': email}
+            self.fila.rpush('sender', json.dumps(msg))
+            print('[REDIS] Message pushed to queue successfully!')
+        except Exception as e:
+            print(f"[REDIS ERROR] {e}")
+            raise
+
         print('[OK] Mensagem registrada e enfileirada!')
 
     def send(self):
         try:
+            print(f"[REQUEST] Received POST to /api")
+            print(f"[REQUEST] Content-Type: {request.content_type}")
+            print(f"[REQUEST] Forms: {dict(request.forms)}")
+            
             assunto = request.forms.get('assunto')
             mensagem = request.forms.get('mensagem')
             email = request.forms.get('email')
 
+            print(f"[REQUEST] Extracted - assunto: {assunto}, mensagem: {mensagem}, email: {email}")
+
             if not (assunto and mensagem and email):
                 response.status = 400
-                return "Campos obrigatórios: assunto, mensagem, email."
+                error_msg = "Campos obrigatórios: assunto, mensagem, email."
+                print(f"[ERROR] {error_msg}")
+                return error_msg
 
             print(f"[RECEBIDO] assunto={assunto} email={email}")
             self.register_message(assunto, mensagem, email)
 
-            return f'Mensagem enfileirada! Assunto: {assunto} Mensagem: {mensagem} Email: {email}'
+            success_msg = f'Mensagem enfileirada! Assunto: {assunto} Mensagem: {mensagem} Email: {email}'
+            print(f"[SUCCESS] {success_msg}")
+            return success_msg
         except Exception as e:
             response.status = 500
-            print(f"[ERRO] {e}")
-            return "Erro interno ao processar a mensagem."
+            error_msg = f"[ERRO] {e}"
+            print(error_msg)
+            return str(e)
 
 if __name__ == '__main__':
     sender = Sender()
