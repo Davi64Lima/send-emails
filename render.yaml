@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: email-sender-api
+    env: python
+    buildCommand: pip install -r app/requirements.txt
+    startCommand: python app/sender.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: DB_HOST
+        fromDatabase:
+          name: email-sender-db
+          property: host
+      - key: DB_USER
+        fromDatabase:
+          name: email-sender-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: email-sender-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: email-sender-db
+          property: database
+      - key: DB_PORT
+        fromDatabase:
+          name: email-sender-db
+          property: port
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: email-sender-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: email-sender-redis
+          property: port
+
+databases:
+  - name: email-sender-db
+    databaseName: email_sender
+    user: postgres
+    plan: free
+
+services:
+  - type: redis
+    name: email-sender-redis
+    plan: free 
