@@ -131,8 +131,7 @@
   <body>
     <div class="container">
       <h1>📧 Email Sender</h1>
-      <form id="emailForm" action="http://localhost/api" method="POST">
-        <div class="form-group">
+      <form id="emailForm" action="https://sender-email-app-production.up.railway.app/api" method="POST">        <div class="form-group">
           <label for="email">Email:</label>
           <input name="email" type="text" required placeholder="Digite o e-mail do destinatário">
         </div> 
@@ -164,7 +163,7 @@
         submitButton.textContent = 'Enviando...';
         statusDiv.style.display = 'none';
         
-        fetch('http://localhost/api', {
+        fetch('https://sender-email-app-production.up.railway.app/api', {
           method: 'POST',
           body: formData
         })
@@ -179,6 +178,7 @@
           statusDiv.textContent = 'Erro ao enviar e-mail. Tente novamente.';
           statusDiv.className = 'status error';
           statusDiv.style.display = 'block';
+          console.log(error);
         })
         .finally(() => {
           submitButton.disabled = false;
