@@ -1,5 +1,6 @@
 FROM python:3.9
 LABEL maintainer 'Juracy Filho <juracy at gmail.com>'
 ENV PYTHONUNBUFFERED 1
-RUN pip install redis==4.3.4
+ENV RESEND_API_KEY='re_4tFuv5Jv_M6GWsWCBoRo9iDW4aMkMc6yZ'
+RUN pip install redis==4.3.4 resend
 ENTRYPOINT ["/usr/local/bin/python"]
