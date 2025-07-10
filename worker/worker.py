@@ -11,7 +11,14 @@ resend.api_key = os.getenv('RESEND_API_KEY')
 def main():
     redis_host = os.getenv('REDIS_HOST', 'queue') 
     redis_conn = redis.Redis(host=redis_host, port=6379, db=0)
+    
+    
+    # Email remetente configurável
+    from_email = os.getenv('FROM_EMAIL', 'onboarding@resend.dev')
 
+    print('Worker iniciado!')
+    print(f'Redis host: {redis_host}')
+    print(f'Email remetente: {from_email}')
     print('Aguardando mensagens ...')
 
     while True:
@@ -25,8 +32,8 @@ def main():
 
             # Envia o e-mail
             email_response = resend.Emails.send({
-                "from": "onboarding@resend.dev",  # ou seu domínio verificado
-                "to": 'novodavilima@gmail.com',
+                "from": from_email,
+                "to": mensagem['email'],
                 "subject": mensagem['assunto'],
                 "html": mensagem['mensagem']
             })

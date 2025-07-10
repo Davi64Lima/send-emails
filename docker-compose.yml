@@ -5,9 +5,13 @@ networks:
 services:
   db:
     image: postgres:9.6
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=email_sender
     volumes:
       # Volume dos dados
-      - dados:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data
       # Scripts
       - ./scripts:/scripts
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -21,6 +25,7 @@ services:
       - DB_PASS=postgres
       - DB_HOST=db
       - DB_PORT=5432
+      - REDIS_HOST=queue
     volumes:
       # Aplicação
       - ./app:/app
@@ -35,6 +40,10 @@ services:
       - queue
   worker:
     build: worker
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=queue
     volumes:
       - ./worker:/worker
     working_dir: /worker

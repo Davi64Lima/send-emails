@@ -17,22 +17,23 @@ class Sender(Bottle):
         self.fila = redis.StrictRedis(host=redis_host, port=6379, db=0)
         self.route('/', method='POST', callback=self.send)
 
-    def register_message(self, assunto, mensagem):
-        SQL = 'INSERT INTO emails (assunto, mensagem) VALUES (%s, %s)'
+    def register_message(self, assunto, mensagem, email):
+        SQL = 'INSERT INTO emails (assunto, mensagem, email) VALUES (%s, %s, %s)'
         cur = self.conn.cursor()
-        cur.execute(SQL, (assunto, mensagem))
+        cur.execute(SQL, (assunto, mensagem, email))
         self.conn.commit()
         cur.close()
-        msg = {'assunto': assunto, 'mensagem': mensagem}
+        msg = {'assunto': assunto, 'mensagem': mensagem, 'email': email}
         self.fila.rpush('sender', json.dumps(msg))
         print('Mensagem registrada !')
 
     def send(self):
         assunto = request.forms.get('assunto')
         mensagem = request.forms.get('mensagem')
-        self.register_message(assunto, mensagem)
-        return 'Mensagem enfileirada ! Assunto: {} Mensagem: {}'.format(
-            assunto, mensagem)
+        email = request.forms.get('email')
+        self.register_message(assunto, mensagem, email)
+        return 'Mensagem enfileirada ! Assunto: {} Mensagem: {} Email: {}'.format(
+            assunto, mensagem, email)
 
 if __name__ == '__main__':
     sender = Sender()
