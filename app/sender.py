@@ -2,7 +2,8 @@ import os
 import psycopg2
 import redis
 import json
-from bottle import Bottle, request, response
+from bottle import Bottle, request, response, hook
+from datetime import datetime
 
 class Sender(Bottle):
     def __init__(self):
@@ -14,26 +15,36 @@ class Sender(Bottle):
 
         redis_host = os.getenv('REDIS_HOST', 'queue') 
         self.fila = redis.StrictRedis(host=redis_host, port=6379, db=0)
+
+        # Rotas
         self.route('/api', method='POST', callback=self.send)
         self.route('/', method='GET', callback=self.index)
+        self.add_hook('after_request', self.enable_cors)
 
     def index(self):
         return "To rodando papai!!"
 
+    def enable_cors(self):
+        # Permitir origem do frontend
+        response.headers['Access-Control-Allow-Origin'] = os.getenv(
+            'ALLOWED_ORIGIN', 'https://sender-email-client-production.up.railway.app')
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With'
+
     def register_message(self, assunto, mensagem, email):
-        SQL = 'INSERT INTO emails (assunto, mensagem, email) VALUES (%s, %s, %s)'
+        SQL = 'INSERT INTO emails (data, assunto, mensagem, email) VALUES (%s, %s, %s, %s)'
+        now = datetime.utcnow()
 
         try:
-            # Abre conexão e cursor com contexto (seguro)
             with psycopg2.connect(self.dsn) as conn:
                 with conn.cursor() as cur:
-                    cur.execute(SQL, (assunto, mensagem, email))
+                    cur.execute(SQL, (now, assunto, mensagem, email))
                     conn.commit()
         except Exception as e:
             print(f"[DB ERROR] {e}")
             raise
 
-        msg = {'assunto': assunto, 'mensagem': mensagem, 'email': email}
+        msg = {'data': now.isoformat(), 'assunto': assunto, 'mensagem': mensagem, 'email': email}
         self.fila.rpush('sender', json.dumps(msg))
         print('[OK] Mensagem registrada e enfileirada!')
 
