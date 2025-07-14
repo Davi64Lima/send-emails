@@ -17,5 +17,9 @@ COPY . .
 # Expor porta correta
 EXPOSE 8080
 
+# Configurar para não bufferizar a saída (importante para logs)
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONFAULTHANDLER=1
+
 # Comando para rodar a aplicação
 CMD ["python", "sender.py"] 
